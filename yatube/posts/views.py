@@ -1,17 +1,17 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
+
 from .forms import PostForm
 from .models import Post, Group, User
-from django.core.paginator import Paginator
-from django.views.decorators.csrf import csrf_exempt
+from .utils import pagina
 
-NUMBER_OF_POST: int = 10
+TITLE_COUNT_SYMBOL: int = 30
 
 
 def index(request):
-    post_list = Post.objects.all()
-    paginator = Paginator(post_list, NUMBER_OF_POST)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = Post.objects.select_related('author', 'group')
+    page_obj = pagina(post_list, request)
     context = {
         'page_obj': page_obj,
     }
@@ -20,10 +20,8 @@ def index(request):
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
-    post_list = group.posts.all()
-    paginator = Paginator(post_list, NUMBER_OF_POST)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    post_list = group.posts.select_related('group')
+    page_obj = pagina(post_list, request)
     context = {
         'group': group,
         'page_obj': page_obj,
@@ -34,13 +32,11 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    user_profile = Post.objects.select_related('author').filter(author=author)
+    user_posts = Post.objects.select_related(
+        'author', 'group').filter(author=author)
     posts_count = Post.objects.filter(author=author).count()
-    paginator = Paginator(user_profile, NUMBER_OF_POST)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = pagina(user_posts, request)
     context = {
-        'user_profile': user_profile,
         'page_obj': page_obj,
         'posts_count': posts_count,
         'author': author,
@@ -52,7 +48,7 @@ def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
     author_post = Post.objects.select_related('author')
     post_count = author_post.count()
-    title = post.text[0:30]
+    title = post.text[:TITLE_COUNT_SYMBOL]
     context = {
         'title': title,
         'post': post,
@@ -66,12 +62,12 @@ def post_detail(request, pk):
 def post_create(request):
     user = get_object_or_404(User, id=request.user.pk)
     if request.method == 'POST':
-        form = PostForm(request.POST)
+        form = PostForm(request.POST or None)
         if form.is_valid():
             new_post = form.save(commit=False)
             new_post.author = request.user
             new_post.save()
-            return redirect(f'/profile/{user}/')
+            return redirect(reverse('posts:profile', args=[user]))
         return render(
             request,
             'posts/create_post.html', {'form': form})
@@ -87,9 +83,9 @@ def post_edit(request, post_id):
         'is_edit': is_edit, 'post': post, 'form': form
     }
     if request.user != post.author:
-        return redirect(f'/posts/{post_id}/')
+        return redirect(reverse('posts:post_detail', args=[post_id]))
     if request.method == 'POST':
         if form.is_valid:
             form.save()
-            return redirect(f'/posts/{post_id}/')
+            return redirect(reverse('posts:post_detail', args=[post_id]))
     return render(request, 'posts/create_post.html', context)

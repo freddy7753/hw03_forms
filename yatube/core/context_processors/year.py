@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import date
+
+date = date.today().year
 
 
 def year(request):
-    d = int(datetime.now().strftime("%Y"))
     return {
-        'year': d,
+        'year': date,
     }
