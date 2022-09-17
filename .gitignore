@@ -145,5 +145,5 @@ dmypy.json
 
 .mypy_cache
 
-tests/
+.tests/
 test_views.py
