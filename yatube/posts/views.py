@@ -92,4 +92,3 @@ def post_edit(request, post_id):
         'form': form
     }
     return render(request, 'posts/create_post.html', context)
-
