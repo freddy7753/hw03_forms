@@ -21,8 +21,10 @@
               </div>
               <div class="card-body">        
                 <form method="post" action="{% if is_edit %}{% url 'posts:post_edit' post.id %}{% else %}{% url 'posts:post_create' %}{% endif %}">
-                  {% csrf_token %}    
-                  {% include 'includes/form_template.html' %}      
+                  {% csrf_token %}
+                {% for field in form %}
+                  {% include 'includes/form_template.html' %}
+                {% endfor %}
                   <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-primary">
                       {% if is_edit %}

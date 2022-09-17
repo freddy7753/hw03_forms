@@ -1,6 +1,5 @@
 {% load user_filters %}
-{% for field in form %}
-    <div class="form-group row my-3 p-3"
+<div class="form-group row my-3 p-3"
     {% if field.field.required %} 
     aria-required="true"
     {% else %}
@@ -18,5 +17,4 @@
         {{ field.help_text|safe }}
         </small>
     {% endif %}
-    </div>
-{% endfor %}
+</div>

@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
 from .forms import PostForm
 from .models import Post, Group, User
@@ -33,7 +33,9 @@ def group_posts(request, slug):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     user_posts = author.posts.select_related(
-        'author', 'group')
+        'author',
+        'group'
+    )
     posts_count = Post.objects.filter(author=author).count()
     page_obj = get_paginator_obj(user_posts, request)
     context = {
@@ -53,15 +55,16 @@ def post_detail(request, pk):
         'title': title,
         'post': post,
         'post_count': post_count,
-        'auhtor_post': author_post,
+        'author_post': author_post,
     }
     return render(request, 'posts/post_detail.html', context)
 
 
-@csrf_exempt
+@login_required
 def post_create(request):
     user = get_object_or_404(User, id=request.user.pk)
     form = PostForm(request.POST or None)
+
     if form.is_valid():
         new_post = form.save(commit=False)
         new_post.author = request.user
@@ -74,15 +77,19 @@ def post_create(request):
 
 def post_edit(request, post_id):
     post = get_object_or_404(Post, id=post_id)
+
     if request.user != post.author:
         return redirect(reverse('posts:post_detail', args=[post_id]))
+
     is_edit = True
     form = PostForm(request.POST or None, instance=post)
+    if form.is_valid():
+        form.save()
+        return redirect(reverse('posts:post_detail', args=[post_id]))
     context = {
-        'is_edit': is_edit, 'post': post, 'form': form
+        'is_edit': is_edit,
+        'post': post,
+        'form': form
     }
-    if request.method == 'POST':
-        if form.is_valid:
-            form.save()
-            return redirect(reverse('posts:post_detail', args=[post_id]))
     return render(request, 'posts/create_post.html', context)
+

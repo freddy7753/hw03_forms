@@ -8,14 +8,9 @@
     <p>  
       {{ group.description }}
     </p>
-  <article>
     {% for post in page_obj %} 
-    {% include 'includes/article.html' %}  
-      {% if post.group %}   
-        <a href=" {% url 'posts:group_list' post.group.slug %}">все записи группы</a>
-    {% endif %}
+    {% include 'includes/article.html' with group_list=True %}
     {% if not forloop.last %}<hr>{% endif %}
     {% endfor %}
-  </article>  
   {% include 'posts/includes/paginator.html' %}
 {% endblock %}
