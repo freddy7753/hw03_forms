@@ -1,9 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from ..models import Group, Post
-
-User = get_user_model()
+from ..models import Group, Post, User
 
 
 class PostModelTest(TestCase):
@@ -23,17 +20,16 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        post = PostModelTest.post
-        exlpected_object_name = post.text
-        self.assertEquals(exlpected_object_name, str(post))
-
-        group = PostModelTest.group
-        expected_object_name_group = group.title
-        self.assertEquals(expected_object_name_group, str(group))
+        correct_str_method = {
+            self.post: self.post.text[:15],
+            self.group: self.group.title
+        }
+        for expected, actual in correct_str_method.items():
+            with self.subTest(expected=expected):
+                self.assertEqual(str(expected), actual)
 
     def test_verbose_name(self):
         """Проверяем, verbose_name на корректность """
-        post = PostModelTest.post
         field_verbose = {
             'author': 'Автор',
             'group': 'Группа'
@@ -41,12 +37,12 @@ class PostModelTest(TestCase):
         for field, expected_value in field_verbose.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    post._meta.get_field(field).verbose_name, expected_value
+                    self.post._meta.get_field(field).verbose_name,
+                    expected_value
                 )
 
     def test_help_text(self):
         """Проверяем на корректность help_text"""
-        post = PostModelTest.post
         field_help_text = {
             'text': 'Введите текст поста',
             'group': 'Группа, к которой будет относиться пост'
@@ -54,5 +50,5 @@ class PostModelTest(TestCase):
         for field, expected_value in field_help_text.items():
             with self.subTest(field=field):
                 self.assertEqual(
-                    post._meta.get_field(field).help_text, expected_value
+                    self.post._meta.get_field(field).help_text, expected_value
                 )
